@@ -13,6 +13,12 @@ npm run preview  # preview production build locally
 
 ProPresenter must be running on the same machine with its network API enabled (default port 49659).
 
+### Local ProPresenter is a test instance
+
+The ProPresenter instance reachable from this development machine is a **dedicated test instance**, not a live/production presentation. Firing real API calls against it — including state-changing triggers like `GET /v1/trigger/next`, `GET /v1/trigger/previous`, macro triggers, clear groups, etc. — is acceptable and expected when validating changes during local coding sessions. There is no need to ask before exercising the API end-to-end, and stale UI state in this test instance is not a concern.
+
+(In contrast, production deployments may be running during a live service. Code paths that fire state-changing triggers should still be designed so an operator can use them deliberately, not accidentally.)
+
 ### Running in Docker
 
 A multi-stage `Dockerfile` builds the Vite bundle with Node 22 and serves it with nginx 1.27. The `nginx.conf` proxies `/api/` → `http://$PROPRESENTER_HOST:$PROPRESENTER_PORT/` (stripping the `/api` prefix to match the dev-server rewrite in `vite.config.js`). The proxy target is templated at container start via nginx's built-in `/etc/nginx/templates/` `envsubst` mechanism — no custom entrypoint.

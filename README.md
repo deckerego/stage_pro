@@ -7,9 +7,8 @@ This was largely created by Claude Code, with moderation and guidance
 by yours truly. I wrote the README and made some tweaks to content, but
 this is largely AI generated. Yeah... I know, I know.
 
-## Building the Docker image
+## Running the Docker Image
 
 ```
-docker build . -t stage_pro:local
-docker run -e PROPRESENTER_HOST=127.0.0.1 -p 8080:80 stage_pro:local
+docker run -e PROPRESENTER_HOST=127.0.0.1 -p 8080:80 ghcr.io/deckerego/stage_pro:latest
 ```

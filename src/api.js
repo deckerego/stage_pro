@@ -22,6 +22,16 @@ export function layoutThumbnailUrl(layoutUuid) {
   return `${BASE}/v1/stage/layout/${layoutUuid}/thumbnail`;
 }
 
+export async function triggerNext() {
+  const res = await fetch(`${BASE}/v1/trigger/next`);
+  if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+}
+
+export async function triggerPrevious() {
+  const res = await fetch(`${BASE}/v1/trigger/previous`);
+  if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+}
+
 export async function* streamStatusUpdates(endpoints, signal) {
   const res = await fetch(`${BASE}/v1/status/updates`, {
     method: 'POST',
