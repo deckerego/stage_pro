@@ -1,6 +1,6 @@
 import { useParams, useLocation, Link } from 'react-router-dom';
 import { useStageStream } from './useStageStream';
-import { triggerNext, triggerPrevious } from './api';
+import { triggerNext, triggerPrevious, slideThumbnailUrl } from './api';
 
 function formatClock(unixSeconds) {
   if (unixSeconds == null) return '—';
@@ -8,11 +8,6 @@ function formatClock(unixSeconds) {
   const h = d.getHours();
   const m = d.getMinutes().toString().padStart(2, '0');
   return `${h % 12 || 12}:${m} ${h >= 12 ? 'PM' : 'AM'}`;
-}
-
-function slideLines(text) {
-  // Normalize \r\n and \r to \n before rendering
-  return text.replace(/\r\n?/g, '\n');
 }
 
 export default function ScreenPage() {
@@ -24,11 +19,13 @@ export default function ScreenPage() {
   const screen = state?.screen ?? { uuid, name: 'Screen', index: '—' };
   const layout = state?.layout ?? null;
 
-  const { slide, timers, videoCountdown, systemTime, connected } = useStageStream();
+  const { slide, slideIndex, timers, videoCountdown, systemTime, connected } = useStageStream();
 
   const current = slide?.current;
-  const next = slide?.next;
   const primaryTimer = timers[0] ?? null;
+  const slideImageSrc = slideIndex
+    ? slideThumbnailUrl(slideIndex.presentation_id.uuid, slideIndex.index)
+    : null;
 
   const handleAdvance = () => {
     triggerNext().catch((err) => console.error('Failed to advance slide:', err));
@@ -74,16 +71,9 @@ export default function ScreenPage() {
         </button>
 
         <div className="stage-current">
-          {current?.text
-            ? <div className="stage-current-text">{slideLines(current.text)}</div>
+          {current && slideImageSrc
+            ? <img className="stage-current-image" src={slideImageSrc} alt={current.text ?? ''} />
             : <div className="stage-idle-text">No active slide</div>
-          }
-        </div>
-
-        <div className="stage-next">
-          {next?.text
-            ? <div className="stage-next-text">{slideLines(next.text)}</div>
-            : <div className="stage-next-text stage-next-empty">—</div>
           }
         </div>
 

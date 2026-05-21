@@ -3,6 +3,7 @@ import { streamStatusUpdates } from './api';
 
 const ENDPOINTS = [
   'status/slide',
+  'presentation/slide_index',
   'timers/current',
   'timer/video_countdown',
   'timer/system_time',
@@ -10,6 +11,7 @@ const ENDPOINTS = [
 
 export function useStageStream() {
   const [slide, setSlide] = useState(null);
+  const [slideIndex, setSlideIndex] = useState(null);
   const [timers, setTimers] = useState([]);
   const [videoCountdown, setVideoCountdown] = useState(null);
   const [systemTime, setSystemTime] = useState(null);
@@ -25,6 +27,9 @@ export function useStageStream() {
             case 'status/slide':
               setSlide(event.data);
               setConnected(true);
+              break;
+            case 'presentation/slide_index':
+              setSlideIndex(event.data?.presentation_index ?? null);
               break;
             case 'timers/current':
               setTimers(event.data ?? []);
@@ -45,5 +50,5 @@ export function useStageStream() {
     return () => controller.abort();
   }, []);
 
-  return { slide, timers, videoCountdown, systemTime, connected };
+  return { slide, slideIndex, timers, videoCountdown, systemTime, connected };
 }

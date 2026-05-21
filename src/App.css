@@ -361,7 +361,7 @@
 .stage-view {
   flex: 1;
   display: grid;
-  grid-template-rows: 1fr 0.38fr 0.3fr;
+  grid-template-rows: 1fr 0.3fr;
   min-height: 0;
   background: #000;
   position: relative;
@@ -416,47 +416,26 @@
   outline-offset: -4px;
 }
 
-/* Current slide — large white text, top zone */
+/* Current slide — full slide image, top zone */
 .stage-current {
-  padding: 4vh 6vw 2vh;
   overflow: hidden;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
 }
 
-.stage-current-text {
-  font-size: clamp(28px, 5vw, 80px);
-  font-weight: 400;
-  color: #fff;
-  line-height: 1.2;
-  white-space: pre-line;
+.stage-current-image {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  display: block;
 }
 
 .stage-idle-text {
   font-size: clamp(18px, 2vw, 28px);
   color: #444;
   font-style: italic;
-  align-self: center;
-}
-
-/* Next slide — amber text, middle zone */
-.stage-next {
-  border-top: 1px solid #d4920a;
-  padding: 2vh 6vw;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-}
-
-.stage-next-text {
-  font-size: clamp(18px, 3vw, 48px);
-  color: #d4920a;
-  line-height: 1.25;
-  white-space: pre-line;
-}
-
-.stage-next-empty {
-  color: #5a3c06;
 }
 
 /* Bottom bar — three amber bordered cells */

@@ -22,6 +22,10 @@ export function layoutThumbnailUrl(layoutUuid) {
   return `${BASE}/v1/stage/layout/${layoutUuid}/thumbnail`;
 }
 
+export function slideThumbnailUrl(presentationUuid, index, quality = 1280) {
+  return `${BASE}/v1/presentation/${presentationUuid}/thumbnail/${index}?quality=${quality}`;
+}
+
 export async function triggerNext() {
   const res = await fetch(`${BASE}/v1/trigger/next`);
   if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
