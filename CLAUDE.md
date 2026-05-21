@@ -84,24 +84,26 @@ React Router v6 is used. Routes are declared in `App.jsx`:
 
 **Screen page (`useStageStream`)**
 1. When a card is clicked, the router navigates to `/screen/:uuid` and `ScreenPage` mounts.
-2. `useStageStream` opens a persistent connection via `POST /v1/status/updates`, subscribing to `status/slide`, `timers/current`, `timer/video_countdown`, and `timer/system_time` in a single stream.
+2. `useStageStream` opens a persistent connection via `POST /v1/status/updates`, subscribing to `status/slide`, `presentation/slide_index`, `timers/current`, `timer/video_countdown`, and `timer/system_time` in a single stream.
 3. The stream returns newline-delimited JSON: `{"url": "<endpoint>", "data": <payload>}`.
 4. Each event routes to the matching piece of state; the page re-renders only the changed zone.
-5. The stream and `AbortController` are torn down on unmount (`useEffect` cleanup).
+5. `presentation/slide_index` carries `{ index, presentation_id: { uuid } }` and is used to build the current-slide image URL via `slideThumbnailUrl()` in `api.js`. The img's `src` changes whenever the operator triggers a slide change, and the browser fetches the new JPEG.
+6. The stream and `AbortController` are torn down on unmount (`useEffect` cleanup).
 
 ### Stage view layout
 
-`ScreenPage` replicates the visual zones shown in the layout thumbnail (pure black background):
+`ScreenPage` hardcodes a two-zone view that mimics ProPresenter's built-in **"Current + Timers"** stage layout (pure black background):
 
 | Zone | Content | Color | Grid row |
 |---|---|---|---|
-| Current (top) | Active slide text | White | `1fr` |
-| Next (middle) | Next slide text | Amber `#d4920a` | `0.38fr` |
+| Current (top) | Active slide rendered as an image (JPEG from ProPresenter) | — | `1fr` |
 | Bottom bar | Timer · Clock · Video countdown | Amber `#d4920a` | `0.3fr` |
 
-The bottom bar always shows three cells regardless of how many timers are configured. The **first timer** (`timers[0]`) is shown in the left cell; its name comes from `id.name`. The clock is derived from `timer/system_time` (Unix seconds → 12-hour format). The right cell shows `timer/video_countdown`.
+**Why hardcoded.** The ProPresenter API does not expose a stage layout's structural zones — only the layout's id, name, and a low-resolution thumbnail (see `/v1/stage/layout/{id}/thumbnail`, ~400×225). Attempts to detect the active layout and adapt the view dynamically were tried and abandoned because there is no reliable signal to drive that adaptation. If the user picks a different layout in ProPresenter, this app continues to show the "Current + Timers" view; switch the layout assignment in ProPresenter to "Current + Timers" for the screen this app is monitoring.
 
-If the layout changes to show a different number of timer elements, this mapping will need to be updated manually — the ProPresenter layout API does not expose which timer UUID is bound to which layout element.
+**Current zone (top).** Renders the live slide image via `GET /v1/presentation/{uuid}/thumbnail/{index}?quality=1280` (≈1280×720 JPEG, ~160KB). The presentation UUID and slide index both come from the streamed `presentation/slide_index` topic, so the image updates immediately when slides advance. `object-fit: contain` preserves aspect ratio with letterboxing if the zone shape differs from the slide's 16:9. If there is no active slide / slide_index event yet, the zone shows an "No active slide" placeholder.
+
+**Bottom bar.** Three amber-bordered cells: the **first timer** (`timers[0]`) on the left (name from `id.name`), the clock in the middle (derived from `timer/system_time` Unix seconds → 12-hour format), and `timer/video_countdown` on the right. The timer-element mapping is fixed — ProPresenter does not expose which timer UUID is bound to which slot in a given layout, so multi-timer layouts are not reproduced.
 
 ### Streaming endpoint
 
@@ -115,8 +117,12 @@ If the layout changes to show a different number of timer elements, this mapping
 | `GET /v1/stage/layout_map` | Screen → layout assignments |
 | `GET /v1/stage/layout/{id}/thumbnail` | JPEG thumbnail of a layout (~400×225) |
 | `GET /v1/status/stage_screens` | Stage output enabled boolean |
+| `GET /v1/presentation/{uuid}/thumbnail/{index}?quality=N` | JPEG of a specific slide. `quality` is the largest dimension in pixels (default 400, we use 1280). |
+| `GET /v1/trigger/next` | Advances the active presentation by one cue. Fired by tapping the right half of the stage view. |
+| `GET /v1/trigger/previous` | Retreats the active presentation by one cue. Fired by tapping the left half of the stage view. |
 | `POST /v1/status/updates` | Multiplex streaming endpoint for live data |
-| `status/slide` _(stream topic)_ | Current + next slide text and speaker notes |
+| `status/slide` _(stream topic)_ | Current + next slide text and slide UUIDs (we use it as a connectivity heartbeat; image rendering uses `presentation/slide_index` instead) |
+| `presentation/slide_index` _(stream topic)_ | `{ presentation_index: { index, presentation_id: { uuid } } }`; drives the current-slide image URL |
 | `timers/current` _(stream topic)_ | Array of `{ id: { uuid, name }, time, state }` for all timers |
 | `timer/video_countdown` _(stream topic)_ | Formatted video countdown string e.g. `"0:12:34"` |
 | `timer/system_time` _(stream topic)_ | Unix timestamp (seconds); used to derive the clock display |
@@ -131,6 +137,5 @@ The full API spec is at `http://localhost:49659/v1/doc/index.html` (Swagger UI).
 
 ## Future work to consider
 
-- **Slide thumbnails**: `GET /v1/presentation/{uuid}/thumbnail/{index}` returns an image of the rendered slide. Could replace or supplement the plain text in `ScreenPage`.
-- **Multiple stream topics**: The `status/updates` stream can subscribe to `presentation/slide_index`, `stage/layout_map`, `timers/current`, etc. simultaneously — useful for adding a timer display or detecting layout changes without reloading.
 - **Auto-refresh on layout change**: Subscribe to `stage/layout_map` in the background stream and update the card grid live instead of requiring a manual refresh.
+- **Higher-resolution slides on 4K displays**: The slide image is fetched at `quality=1280`. For UHD confidence monitors, bumping to 1920 (full slide width) may look sharper at the cost of ~3× bandwidth per slide change.
