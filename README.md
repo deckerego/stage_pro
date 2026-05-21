@@ -9,14 +9,14 @@ this is largely AI generated. Yeah... I know, I know.
 
 ## Running the Docker Image
 
-To initially run this image:
+To initially run this image on a machine with ProPresenter installed:
 ```bash
-docker run -e PROPRESENTER_HOST=127.0.0.1 -p 8080:80 ghcr.io/deckerego/stage_pro:latest
+docker run --name stage_pro -p 8080:80 ghcr.io/deckerego/stage_pro:latest
 ```
 
 To have the container automatically start:
 ```bash
 docker ps | grep "stage_pro"
-docker update --restart=unless-stopped container_id
+docker update --restart=unless-stopped stage_pro
 ```
 
