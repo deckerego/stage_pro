@@ -13,9 +13,23 @@ npm run preview  # preview production build locally
 
 ProPresenter must be running on the same machine with its network API enabled (default port 49659).
 
+### Running in Docker
+
+A multi-stage `Dockerfile` builds the Vite bundle with Node 22 and serves it with nginx 1.27. The `nginx.conf` proxies `/api/` → `http://$PROPRESENTER_HOST:$PROPRESENTER_PORT/` (stripping the `/api` prefix to match the dev-server rewrite in `vite.config.js`). The proxy target is templated at container start via nginx's built-in `/etc/nginx/templates/` `envsubst` mechanism — no custom entrypoint.
+
+```bash
+docker build -t stage-pro .
+# ProPresenter on the Docker host (Mac/Windows, or Linux with --add-host):
+docker run --rm -p 8080:80 --add-host=host.docker.internal:host-gateway stage-pro
+# ProPresenter elsewhere on the network:
+docker run --rm -p 8080:80 -e PROPRESENTER_HOST=192.168.1.50 stage-pro
+```
+
+`PROPRESENTER_HOST` defaults to `host.docker.internal` and `PROPRESENTER_PORT` to `49659`. The nginx config disables proxy buffering and sets a long read timeout to keep the `POST /v1/status/updates` stream alive.
+
 ## Architecture
 
-All API calls go through a Vite dev-server proxy (`/api` → `http://localhost:49659`) configured in `vite.config.js`. This avoids CORS issues during development. In production you would need a reverse proxy (nginx, Caddy, etc.) doing the same.
+All API calls go through a Vite dev-server proxy (`/api` → `http://localhost:49659`) configured in `vite.config.js`. This avoids CORS issues during development. The production Docker image replicates this with nginx (see above); any other deployment needs an equivalent reverse-proxy rule.
 
 ## Design constraints
 
@@ -114,4 +128,3 @@ The full API spec is at `http://localhost:49659/v1/doc/index.html` (Swagger UI).
 - **Slide thumbnails**: `GET /v1/presentation/{uuid}/thumbnail/{index}` returns an image of the rendered slide. Could replace or supplement the plain text in `ScreenPage`.
 - **Multiple stream topics**: The `status/updates` stream can subscribe to `presentation/slide_index`, `stage/layout_map`, `timers/current`, etc. simultaneously — useful for adding a timer display or detecting layout changes without reloading.
 - **Auto-refresh on layout change**: Subscribe to `stage/layout_map` in the background stream and update the card grid live instead of requiring a manual refresh.
-- **Production deployment**: The app is a static bundle — serve `dist/` from any web server. Add a reverse proxy rule to forward `/api` to `http://localhost:49659`.
