@@ -1,5 +1,6 @@
 import { useParams, useLocation, Link } from 'react-router-dom';
 import { useStageStream } from './useStageStream';
+import { triggerNext, triggerPrevious } from './api';
 
 function formatClock(unixSeconds) {
   if (unixSeconds == null) return '—';
@@ -29,6 +30,14 @@ export default function ScreenPage() {
   const next = slide?.next;
   const primaryTimer = timers[0] ?? null;
 
+  const handleAdvance = () => {
+    triggerNext().catch((err) => console.error('Failed to advance slide:', err));
+  };
+
+  const handleRetreat = () => {
+    triggerPrevious().catch((err) => console.error('Failed to go to previous slide:', err));
+  };
+
   return (
     <div className="screen-page">
 
@@ -45,6 +54,24 @@ export default function ScreenPage() {
       </header>
 
       <div className="stage-view">
+
+        <button
+          type="button"
+          className="stage-tap-zone stage-tap-prev"
+          aria-label="Go to previous slide"
+          onClick={handleRetreat}
+        >
+          <span className="stage-tap-zone-chevron" aria-hidden="true">‹</span>
+        </button>
+
+        <button
+          type="button"
+          className="stage-tap-zone stage-tap-next"
+          aria-label="Advance to next slide"
+          onClick={handleAdvance}
+        >
+          <span className="stage-tap-zone-chevron" aria-hidden="true">›</span>
+        </button>
 
         <div className="stage-current">
           {current?.text

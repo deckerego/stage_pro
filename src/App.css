@@ -364,6 +364,56 @@
   grid-template-rows: 1fr 0.38fr 0.3fr;
   min-height: 0;
   background: #000;
+  position: relative;
+}
+
+.stage-tap-zone {
+  position: absolute;
+  top: 0;
+  width: 50%;
+  height: 100%;
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  z-index: 2;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.stage-tap-prev {
+  left: 0;
+  justify-content: flex-start;
+  padding-left: 2vw;
+}
+
+.stage-tap-next {
+  right: 0;
+  justify-content: flex-end;
+  padding-right: 2vw;
+}
+
+.stage-tap-zone-chevron {
+  font-size: clamp(40px, 6vw, 96px);
+  color: rgba(255, 255, 255, 0.15);
+  line-height: 1;
+  transition: color 0.1s ease-out;
+  pointer-events: none;
+}
+
+.stage-tap-zone:hover .stage-tap-zone-chevron,
+.stage-tap-zone:focus-visible .stage-tap-zone-chevron {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.stage-tap-zone:active .stage-tap-zone-chevron {
+  color: #d4920a;
+}
+
+.stage-tap-zone:focus-visible {
+  outline: 2px solid rgba(212, 146, 10, 0.5);
+  outline-offset: -4px;
 }
 
 /* Current slide — large white text, top zone */
